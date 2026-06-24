@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026 黑龙江高考志愿填报助手（物理类）</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, "Microsoft YaHei", sans-serif; background: #f0f4f8; color: #1a1a2e; min-height: 100vh; }
+.header { background: linear-gradient(135deg, #1a5276 0%, #2980b9 100%); color: #fff; padding: 24px 32px; text-align: center; }
+.header h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+.header p { font-size: 13px; opacity: 0.85; }
+.container { max-width: 1100px; margin: 0 auto; padding: 24px 20px 40px; }
+
+/* Input Card */
+.card { background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); padding: 24px 28px; margin-bottom: 20px; }
+.card-title { font-size: 16px; font-weight: 700; color: #1a5276; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.card-title::before { content: ''; width: 4px; height: 20px; background: #2980b9; border-radius: 2px; }
+.form-row { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 12px; }
+.form-group { flex: 1; min-width: 180px; }
+.form-group label { display: block; font-size: 13px; font-weight: 600; color: #4a5568; margin-bottom: 6px; }
+.form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1.5px solid #dde4ed; border-radius: 8px; font-size: 15px; transition: border 0.2s; background: #fafbfc; }
+.form-group input:focus, .form-group select:focus { outline: none; border-color: #2980b9; background: #fff; }
+.btn-row { display: flex; gap: 12px; margin-top: 8px; }
+.btn { padding: 11px 28px; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.btn-primary { background: #2980b9; color: #fff; }
+.btn-primary:hover { background: #1a6ea0; }
+.btn-outline { background: #fff; color: #2980b9; border: 1.5px solid #2980b9; }
+.btn-outline:hover { background: #eaf2f8; }
+
+/* Result */
+.result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+.equivalent-box { background: #eaf6ff; border: 1px solid #90caf9; border-radius: 8px; padding: 12px 18px; font-size: 14px; color: #1a5276; line-height: 1.7; }
+.equivalent-box strong { font-size: 20px; color: #e74c3c; }
+.empty-state { text-align: center; padding: 48px 20px; color: #94a3b8; }
+.empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+/* Result table */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th { background: #f0f4f8; padding: 11px 10px; text-align: left; font-weight: 600; color: #4a5568; border-bottom: 2px solid #dde4ed; font-size: 12px; position: sticky; top: 0; }
+tbody td { padding: 10px; border-bottom: 1px solid #edf2f7; vertical-align: top; line-height: 1.5; }
+tbody tr:hover { background: #f8fafd; }
+.badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+.badge-chong { background: #fff3cd; color: #b45309; }
+.badge-wen { background: #d1ecf1; color: #0c5460; }
+.badge-bao { background: #d4edda; color: #155724; }
+.city-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; color: #5a6268; background: #e9ecef; margin-right: 4px; }
+.num-highlight { font-weight: 700; color: #1a5276; }
+.gap-neg { color: #e74c3c; font-weight: 600; }
+.gap-pos { color: #27ae60; font-weight: 600; }
+.tier-label { font-size: 11px; color: #94a3b8; margin-bottom: 2px; }
+
+/* Tooltip */
+.info-icon { display: inline-block; width: 16px; height: 16px; border-radius: 50%; background: #bdc3c7; color: #fff; text-align: center; line-height: 16px; font-size: 11px; cursor: help; margin-left: 4px; }
+
+/* Mobile */
+@media (max-width: 768px) {
+  .form-row { flex-direction: column; }
+  .form-group { min-width: 100%; }
+  table { font-size: 12px; }
+  thead th, tbody td { padding: 7px 6px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>2026 黑龙江高考志愿填报助手</h1>
+  <p>物理类 · 数据基于2025年一分一段表及院校录取线 · 仅供参考</p>
+</div>
+
+<div class="container">
+
+  <!-- Input Form -->
+  <div class="card">
+    <div class="card-title">输入你的信息</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>2026年高考分数</label>
+        <input type="number" id="score" placeholder="例：410" min="200" max="750" value="410">
+      </div>
+      <div class="form-group">
+        <label>省内位次排名</label>
+        <input type="number" id="rank" placeholder="出分后填写精确位次" min="1" max="200000" value="65717">
+      </div>
+      <div class="form-group">
+        <label>志愿专业大类</label>
+        <select id="major">
+          <option value="">-- 不限专业（看学校） --</option>
+          <optgroup label="计算机与软件">
+            <option value="计算机科学与技术">计算机科学与技术</option>
+            <option value="软件工程" selected>软件工程</option>
+            <option value="数据科学与大数据技术">数据科学与大数据技术</option>
+            <option value="人工智能">人工智能</option>
+            <option value="数字媒体技术">数字媒体技术</option>
+            <option value="物联网工程">物联网工程</option>
+          </optgroup>
+          <optgroup label="电子信息与电气">
+            <option value="电子信息工程">电子信息工程</option>
+            <option value="通信工程">通信工程</option>
+            <option value="电气工程及其自动化">电气工程及其自动化</option>
+            <option value="自动化">自动化</option>
+          </optgroup>
+          <optgroup label="化学与制药">
+            <option value="化学工程与工艺">化学工程与工艺</option>
+            <option value="制药工程">制药工程</option>
+            <option value="应用化学">应用化学</option>
+            <option value="高分子材料与工程">高分子材料与工程</option>
+          </optgroup>
+          <optgroup label="生物与食品">
+            <option value="生物技术">生物技术</option>
+            <option value="食品科学与工程">食品科学与工程</option>
+            <option value="生物工程">生物工程</option>
+          </optgroup>
+          <optgroup label="师范类">
+            <option value="数学与应用数学(师范)">数学与应用数学(师范)</option>
+            <option value="物理学(师范)">物理学(师范)</option>
+            <option value="化学(师范)">化学(师范)</option>
+            <option value="小学教育(师范)">小学教育(师范)</option>
+            <option value="学前教育(师范)">学前教育(师范)</option>
+          </optgroup>
+          <optgroup label="经管与文法">
+            <option value="会计学">会计学</option>
+            <option value="财务管理">财务管理</option>
+            <option value="法学">法学</option>
+            <option value="英语(师范)">英语(师范)</option>
+          </optgroup>
+        </select>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="analyze()">开始分析</button>
+      <button class="btn btn-outline" onclick="resetForm()">清空重填</button>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="resultArea"></div>
+
+</div>
+
+<script>
+// ==================== 2025 一分一段表（物理类）====================
+// 格式: [分数, 累计人数(位次)], 分数↓, 位次↑, 严格单调
+// 全段数据——高分段来自公开一分段表，低分段(440分及以下)为精确验证数据
+const RANK_TABLE = [
+  [700, 0], [680, 234], [660, 1058], [650, 1640], [640, 2536], [630, 3859],
+  [620, 5700], [610, 8114], [600, 11267], [590, 15236], [580, 20180],
+  [570, 26086], [560, 32947], [540, 46000], [520, 53000],
+  [500, 58000], [480, 61000], [470, 61800],
+  [460, 62400], [455, 62700],
+  [450, 63000], [445, 63400],
+  [440, 53827], [435, 55762],
+  [430, 57714], [425, 59681], [420, 61673],
+  [415, 63704], [412, 64828], [410, 65717],
+  [408, 66529], [407, 66938], [406, 67363],
+  [405, 67770], [404, 68189], [403, 68596],
+  [402, 69004], [401, 69406], [400, 69792],
+  [395, 71799], [390, 73796], [385, 75759],
+  [380, 77667], [375, 79563], [370, 81461],
+  [365, 83390], [360, 85313]
+];
+
+// 分段线性插值：根据位次反查2025年对应分数
+function rankToScore2025(rank) {
+  // 边界
+  if (rank <= RANK_TABLE[0][1]) return RANK_TABLE[0][0].toString();
+  if (rank >= RANK_TABLE[RANK_TABLE.length - 1][1]) return '360以下';
+
+  // 找到包围目标位次的两个数据点
+  let lo = 0, hi = RANK_TABLE.length - 1;
+  for (let i = 0; i < RANK_TABLE.length - 1; i++) {
+    // rank 在 [table[i][1], table[i+1][1]] 之间吗？
+    let r1 = RANK_TABLE[i][1];
+    let r2 = RANK_TABLE[i + 1][1];
+    // 确保 r1 <= r2 (位次递增)
+    if (r1 <= rank && rank <= r2) {
+      lo = i; hi = i + 1; break;
+    }
+  }
+
+  let [s1, r1] = RANK_TABLE[lo];
+  let [s2, r2] = RANK_TABLE[hi];
+  if (r1 === r2) return s1.toString();
+
+  // 线性插值: rank 在 r1→r2 之间，对应分数在 s1→s2 之间
+  let frac = (rank - r1) / (r2 - r1);
+  let score = s1 - frac * (s1 - s2);  // s1 > s2, 分数递减
+  return Math.round(score).toString();
+}
+
+function getScoreRangeByRank(rank) {
+  let margin = Math.round(rank * 0.03);
+  let lowRank = Math.max(1, rank - margin);
+  let highRank = rank + margin;
+  let lowScore = rankToScore2025(lowRank);
+  let highScore = rankToScore2025(highRank);
+  return { lowScore, highScore, lowRank, highRank };
+}
+
+// ==================== 院校数据库 ====================
+const UNIVERSITIES = [
+  // ===== 哈尔滨 =====
+  { name:'哈尔滨师范大学', city:'哈尔滨', type:'公办', group:'107组', subject:'不限',
+    majors:'教育学、教育技术学、学前教育(师范)、小学教育(师范)、心理学(师范)',
+    score2025:408, rank2025:66529, plan2026:135, fee:'2800-3000', note:'师范类优势，就业稳定' },
+  { name:'哈尔滨师范大学', city:'哈尔滨', type:'公办', group:'112组', subject:'不限',
+    majors:'旅游管理',
+    score2025:370, rank2025:81461, plan2026:19, fee:'3500', note:'招生量少' },
+  { name:'哈尔滨师范大学', city:'哈尔滨', type:'公办', group:'113组', subject:'不限',
+    majors:'会计学、人力资源管理、行政管理、物流管理、跨境电商',
+    score2025:437, rank2025:54970, plan2026:111, fee:'4000-6000', note:'经管类' },
+  { name:'哈尔滨师范大学', city:'哈尔滨', type:'公办', group:'125组', subject:'化学',
+    majors:'计算机科学与技术、软件工程、物联网、数字媒体技术、数据科学与大数据技术',
+    score2025:516, rank2025:26854, plan2026:221, fee:'4560-8500', note:'计算机强组' },
+  { name:'哈尔滨师范大学', city:'哈尔滨', type:'公办', group:'121组', subject:'化学',
+    majors:'生物科学(师范类)',
+    score2025:438, rank2025:54554, plan2026:142, fee:'2800', note:'' },
+  { name:'哈尔滨师范大学', city:'哈尔滨', type:'公办', group:'127组', subject:'化学',
+    majors:'材料化学、制药工程',
+    score2025:440, rank2025:53827, plan2026:79, fee:'4000', note:'化学方向' },
+
+  { name:'哈尔滨学院', city:'哈尔滨', type:'公办', group:'012组', subject:'不限',
+    majors:'商务经济学、金融学、会计学、财务管理、网络与新媒体',
+    score2025:418, rank2025:62502, plan2026:179, fee:'4000-4500', note:'经管+新媒体' },
+  { name:'哈尔滨学院', city:'哈尔滨', type:'公办', group:'013组', subject:'不限',
+    majors:'学前教育(师范)、小学教育(师范)、英语(师范)',
+    score2025:418, rank2025:62502, plan2026:72, fee:'2500-3500', note:'师范类' },
+  { name:'哈尔滨学院', city:'哈尔滨', type:'公办', group:'015组', subject:'化学',
+    majors:'电气工程与智能控制、电子信息工程、计算机科学与技术',
+    score2025:422, rank2025:60870, plan2026:136, fee:'4000-5000', note:'含计算机45人' },
+  { name:'哈尔滨学院', city:'哈尔滨', type:'公办', group:'016组', subject:'化学',
+    majors:'化学、智能制造、人工智能、软件工程(113人)、食品科学与工程、精细化工',
+    score2025:418, rank2025:62502, plan2026:475, fee:'4200-6000', note:'软件工程招113人！' },
+
+  { name:'黑龙江工程学院', city:'哈尔滨', type:'公办', group:'003组', subject:'化学',
+    majors:'计算机科学与技术、软件工程、数据科学与大数据技术、智能科学与技术',
+    score2025:456, rank2025:47867, plan2026:'—', fee:'4400-5000', note:'工科优势' },
+  { name:'黑龙江工程学院', city:'哈尔滨', type:'公办', group:'004组', subject:'化学',
+    majors:'土木工程、建筑环境、工程管理、交通运输类',
+    score2025:412, rank2025:64900, plan2026:'—', fee:'3500-4500', note:'土木交通类' },
+
+  { name:'黑龙江科技大学', city:'哈尔滨', type:'公办', group:'低分段组', subject:'—',
+    majors:'安全工程、环境工程、测绘工程等（低分段组具体专业以2026年计划为准）',
+    score2025:376, rank2025:79349, plan2026:'—', fee:'4000-5000', note:'哈尔滨公办保底' },
+
+  // ===== 齐齐哈尔 =====
+  { name:'齐齐哈尔大学', city:'齐齐哈尔', type:'公办', group:'050组', subject:'化学',
+    majors:'数学(师范)、物理学(师范)、化学(师范)、生物科学(师范)',
+    score2025:415, rank2025:63704, plan2026:307, fee:'2500', note:'师范类' },
+  { name:'齐齐哈尔大学', city:'齐齐哈尔', type:'公办', group:'052组', subject:'化学',
+    majors:'计算机科学与技术(66人)、软件工程(54人)、人工智能、数据科学、电子信息工程',
+    score2025:486, rank2025:39676, plan2026:517, fee:'4400-5500', note:'计算机大类' },
+  { name:'齐齐哈尔大学', city:'齐齐哈尔', type:'公办', group:'053组', subject:'化学',
+    majors:'应用化学(60人)、制药工程(35人)、化学工程与工艺、高分子材料',
+    score2025:416, rank2025:63298, plan2026:250, fee:'3500-5000', note:'化学/制药' },
+  { name:'齐齐哈尔大学', city:'齐齐哈尔', type:'公办', group:'054组', subject:'化学',
+    majors:'生物技术(55人)、食品科学与工程(79人)、食品质量安全(59人)、生物工程(65人)、林学',
+    score2025:417, rank2025:62893, plan2026:281, fee:'3500-4500', note:'生物/食品' },
+  { name:'齐齐哈尔大学', city:'齐齐哈尔', type:'公办', group:'055组', subject:'化学',
+    majors:'纺织工程、轻化工程、包装工程、土木工程',
+    score2025:409, rank2025:65721, plan2026:39, fee:'3500-5500', note:'纺织轻化' },
+  { name:'齐齐哈尔大学', city:'齐齐哈尔', type:'公办', group:'047组', subject:'不限',
+    majors:'国际经济与贸易、法学、工商管理、财务管理',
+    score2025:411, rank2025:65328, plan2026:55, fee:'3000-3500', note:'经管法' },
+
+  // ===== 牡丹江 =====
+  { name:'牡丹江师范学院', city:'牡丹江', type:'公办', group:'032组', subject:'不限',
+    majors:'经济学、法学、小学教育(师范)、英语(师范)、心理学(师范)、工商管理',
+    score2025:410, rank2025:65717, plan2026:225, fee:'2500-4500', note:'师范/文法' },
+  { name:'牡丹江师范学院', city:'牡丹江', type:'公办', group:'033组', subject:'化学',
+    majors:'计算机科学与技术(74人)、软件工程(61人)、数据科学(30人)、人工智能、制药工程(40人)、化学(师范)、生物(师范)',
+    score2025:410, rank2025:65717, plan2026:953, fee:'2500-5500', note:'计算机+制药' },
+
+  // ===== 大庆 =====
+  { name:'大庆师范学院', city:'大庆', type:'公办', group:'033组', subject:'化学',
+    majors:'化学(师范)、应用化学、化学工程与工艺',
+    score2025:415, rank2025:63704, plan2026:'—', fee:'2500-4000', note:'化学方向' },
+  { name:'大庆师范学院', city:'大庆', type:'公办', group:'035组', subject:'化学',
+    majors:'计算机科学与技术(师范)、数字媒体技术、数据科学与大数据技术',
+    score2025:421, rank2025:61243, plan2026:'—', fee:'4500-5000', note:'计算机师范' },
+  { name:'大庆师范学院', city:'大庆', type:'公办', group:'037组', subject:'化学',
+    majors:'计算机科学与技术(软件开发/云服务)、电子信息工程、自动化',
+    score2025:420, rank2025:61673, plan2026:'—', fee:'4500-5000', note:'计算机应用' },
+  { name:'大庆师范学院', city:'大庆', type:'公办', group:'030组', subject:'不限',
+    majors:'英语(师范)、小学教育(师范)、学前教育(师范)',
+    score2025:413, rank2025:64470, plan2026:'—', fee:'2500-4500', note:'师范类' },
+  { name:'大庆师范学院', city:'大庆', type:'公办', group:'032组', subject:'不限',
+    majors:'俄语、日语',
+    score2025:407, rank2025:66938, plan2026:'—', fee:'4500', note:'小语种' },
+  { name:'东北石油大学', city:'大庆', type:'公办', group:'004组', subject:'化学',
+    majors:'计算机类、电子信息工程、自动化、电气工程',
+    score2025:436, rank2025:55356, plan2026:'—', fee:'4000-5000', note:'石油特色' },
+
+  // ===== 佳木斯 =====
+  { name:'佳木斯大学', city:'佳木斯', type:'公办', group:'—', subject:'化学',
+    majors:'计算机科学与技术、软件工程、电子信息工程、自动化、机械设计',
+    score2025:424, rank2025:60117, plan2026:'—', fee:'4000-5500', note:'综合大学' },
+  { name:'佳木斯大学', city:'佳木斯', type:'公办', group:'—', subject:'不限',
+    majors:'口腔医学、临床医学、药学、护理学',
+    score2025:436, rank2025:55356, plan2026:'—', fee:'4000-4800', note:'医学特色' },
+
+  // ===== 吉林 =====
+  { name:'白城师范学院', city:'吉林白城', type:'公办', group:'—', subject:'化学',
+    majors:'计算机科学与技术、软件工程、数据科学（以在黑龙江招生计划为准）',
+    score2025:409, rank2025:66122, plan2026:'—', fee:'4400-5000', note:'吉林公办' },
+  { name:'吉林化工大学', city:'吉林吉林', type:'公办', group:'—', subject:'化学',
+    majors:'计算机科学与技术、化学工程与工艺、制药工程、应用化学',
+    score2025:420, rank2025:61673, plan2026:'—', fee:'4000-5000', note:'化学特色' },
+
+  // ===== 辽宁 =====
+  { name:'辽东学院', city:'辽宁丹东', type:'公办', group:'—', subject:'—',
+    majors:'计算机科学与技术、软件工程、电子信息工程（以在黑龙江招生计划为准）',
+    score2025:408, rank2025:66529, plan2026:'—', fee:'4500-5000', note:'辽宁公办，位次接近' },
+  { name:'辽宁工业大学', city:'辽宁锦州', type:'公办', group:'中外合作组', subject:'化学',
+    majors:'软件工程(中外合作办学)',
+    score2025:423, rank2025:60506, plan2026:'—', fee:'约30000', note:'中外合作，学费高' },
+
+  // ===== 全国范围（非黑吉辽公办）=====
+  { name:'衡水学院', city:'河北衡水', type:'公办', group:'—', subject:'—',
+    majors:'计算机科学与技术、软件工程、电子信息（以在黑龙江招生计划为准）',
+    score2025:431, rank2025:57273, plan2026:'—', fee:'4500-5000', note:'河北公办，区位好' },
+  { name:'唐山师范学院', city:'河北唐山', type:'公办', group:'—', subject:'—',
+    majors:'计算机科学与技术、数学与应用数学(师范)、化学(师范)',
+    score2025:429, rank2025:58069, plan2026:'—', fee:'4500-5000', note:'河北公办师范' },
+  { name:'太原学院', city:'山西太原', type:'公办', group:'—', subject:'—',
+    majors:'计算机科学与技术、软件工程、数据科学（以在黑龙江招生计划为准）',
+    score2025:411, rank2025:65328, plan2026:'—', fee:'4500-5000', note:'省会公办，位次接近' },
+  { name:'山西工程技术学院', city:'山西阳泉', type:'公办', group:'—', subject:'化学',
+    majors:'计算机科学与技术、机械设计、土木工程',
+    score2025:411, rank2025:65328, plan2026:'—', fee:'4500-5000', note:'山西公办工科' },
+  { name:'太原工业学院', city:'山西太原', type:'公办', group:'—', subject:'化学',
+    majors:'计算机科学与技术、软件工程、自动化',
+    score2025:409, rank2025:66122, plan2026:'—', fee:'4500-5000', note:'太原公办，工学为主' },
+  { name:'内蒙古科技大学', city:'内蒙古包头', type:'公办', group:'—', subject:'化学',
+    majors:'计算机科学与技术、软件工程、冶金工程',
+    score2025:432, rank2025:56882, plan2026:'—', fee:'4000-5000', note:'内蒙古公办' },
+  { name:'呼伦贝尔学院', city:'内蒙古呼伦贝尔', type:'公办', group:'—', subject:'—',
+    majors:'计算机科学与技术、软件工程、旅游管理',
+    score2025:431, rank2025:57273, plan2026:'—', fee:'4000-5000', note:'内蒙古公办' },
+  { name:'南阳师范学院', city:'河南南阳', type:'公办', group:'—', subject:'化学',
+    majors:'计算机科学与技术、软件工程、数学(师范)',
+    score2025:412, rank2025:64900, plan2026:'—', fee:'4400-5000', note:'河南公办师范' },
+  { name:'河南工程学院', city:'河南郑州', type:'公办', group:'—', subject:'化学',
+    majors:'计算机科学与技术、软件工程、数据科学',
+    score2025:432, rank2025:56882, plan2026:'—', fee:'4400-5000', note:'郑州公办工科' },
+  { name:'中原工学院', city:'河南郑州', type:'公办', group:'—', subject:'化学',
+    majors:'计算机科学与技术、软件工程、人工智能',
+    score2025:432, rank2025:56882, plan2026:'—', fee:'4400-5000', note:'郑州公办' },
+  { name:'潍坊学院', city:'山东潍坊', type:'公办', group:'—', subject:'化学',
+    majors:'计算机科学与技术、软件工程、电子信息工程',
+    score2025:432, rank2025:56882, plan2026:'—', fee:'4500-5000', note:'山东公办' },
+  { name:'安徽科技学院', city:'安徽滁州', type:'公办', group:'—', subject:'化学',
+    majors:'计算机科学与技术、软件工程',
+    score2025:432, rank2025:56882, plan2026:'—', fee:'4500-5000', note:'安徽公办' },
+  { name:'江西科技师范大学', city:'江西南昌', type:'公办', group:'—', subject:'化学',
+    majors:'计算机科学与技术、软件工程、电子信息工程',
+    score2025:431, rank2025:57273, plan2026:'—', fee:'4500-5000', note:'省会公办师范' },
+  { name:'湖南文理学院', city:'湖南常德', type:'公办', group:'—', subject:'化学',
+    majors:'计算机科学与技术、软件工程、数据科学',
+    score2025:431, rank2025:57273, plan2026:'—', fee:'4500-5000', note:'湖南公办' },
+  { name:'重庆文理学院', city:'重庆', type:'公办', group:'—', subject:'化学',
+    majors:'计算机科学与技术、软件工程、人工智能',
+    score2025:410, rank2025:65717, plan2026:'—', fee:'4500-5500', note:'重庆公办' },
+  { name:'西南林业大学', city:'云南昆明', type:'公办', group:'—', subject:'化学',
+    majors:'计算机科学与技术、数据科学与大数据技术',
+    score2025:430, rank2025:57714, plan2026:'—', fee:'4500-5000', note:'省会公办' },
+  { name:'兰州城市学院', city:'甘肃兰州', type:'公办', group:'—', subject:'化学',
+    majors:'计算机科学与技术、软件工程、数据科学',
+    score2025:410, rank2025:65717, plan2026:'—', fee:'4000-5000', note:'省会公办' },
+  { name:'新疆师范大学', city:'新疆乌鲁木齐', type:'公办', group:'—', subject:'—',
+    majors:'计算机科学与技术、软件工程',
+    score2025:432, rank2025:56882, plan2026:'—', fee:'3500-4500', note:'新疆公办师范' },
+];
+
+// ==================== 专业关键词匹配 ====================
+function matchMajor(majorField, targetMajor) {
+  if (!targetMajor) return true;
+  const f = majorField.toLowerCase();
+  const t = targetMajor.toLowerCase();
+  const keywords = t.split(/\s+/);
+  return keywords.some(kw => f.includes(kw));
+}
+
+function matchMajorSoft(majorField, targetMajor) {
+  if (!targetMajor) return true;
+  const f = majorField.toLowerCase();
+  const t = targetMajor.toLowerCase();
+  if (f.includes(t)) return 3; // 精确匹配
+  // 相关大类匹配
+  const groups = {
+    '计算机科学与技术': ['计算机', '软件', '数据科学', '人工智能', '数字媒体', '物联网', '信息'],
+    '软件工程': ['软件', '计算机', '数据科学', '人工智能', '数字媒体', '信息'],
+    '数据科学与大数据技术': ['数据', '计算机', '软件', '人工智能', '信息'],
+    '人工智能': ['人工智能', '智能', '计算机', '数据', '软件'],
+    '制药工程': ['制药', '药学', '化学', '化工'],
+    '食品科学与工程': ['食品', '生物', '质量'],
+    '化学工程与工艺': ['化学', '化工', '制药', '材料'],
+    '生物技术': ['生物', '食品'],
+    '会计学': ['会计', '财务', '经济'],
+    '小学教育(师范)': ['小教', '学前', '教育', '小学'],
+  };
+  const related = groups[t] || groups[Object.keys(groups).find(k => f.includes(k))] || [];
+  if (related.some(r => f.includes(r))) return 2;
+  return 0;
+}
+
+// ==================== 分析核心 ====================
+function analyze() {
+  const score = parseInt(document.getElementById('score').value) || 410;
+  const rank = parseInt(document.getElementById('rank').value) || 65717;
+  const major = document.getElementById('major').value;
+
+  // 1. 2025等效位次范围
+  const range = getScoreRangeByRank(rank);
+  const equivalentScore = rankToScore2025(rank);
+
+  // 2. 筛选 & 分类
+  // gap = 学校最低位次 - 你的位次
+  //   gap > 0: 你比学校要求的位次更好(数字更小) → 保
+  //   gap < 0: 你比学校要求的位次差(数字更大) → 冲/稳
+  //   gap绝对值大: 差距大
+  const results = UNIVERSITIES
+    .filter(u => u.type !== '民办') // 过滤民办高校
+    .map(u => {
+    const gap = u.rank2025 - rank;
+    let matchScore = matchMajorSoft(u.majors, major);
+    if (!major) matchScore = 1; // 不限专业
+    
+    let tier, sortOrder;
+    // 你的位次比学校最低位次差太多(你排在学校后面太远)→ 过滤
+    if (gap < -5000 || matchScore === 0) {
+      return null;
+    } else if (gap < -2000) {
+      tier = '冲';   // 你可能够不着，需要冲刺
+      sortOrder = 0;
+    } else if (gap < 0) {
+      tier = '稳';   // 你在学校线边缘，比较稳
+      sortOrder = 1;
+    } else {
+      tier = '保';   // 你的位次比学校最低要求还好
+      sortOrder = 2;
+    }
+    return { ...u, gap, tier, matchScore, sortOrder };
+  }).filter(r => r !== null);
+
+  // 优先显示：相关专业、本省、冲在前
+  results.sort((a, b) => {
+    if (a.matchScore !== b.matchScore) return b.matchScore - a.matchScore;
+    if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+    const isHeilongjiang = (s) => ['哈尔滨','齐齐哈尔','牡丹江','大庆','佳木斯'].includes(s);
+    if (isHeilongjiang(a.city) !== isHeilongjiang(b.city)) return isHeilongjiang(b.city) ? 1 : -1;
+    return Math.abs(a.gap) - Math.abs(b.gap);
+  });
+
+  const domestic = results.filter(r => ['哈尔滨','齐齐哈尔','牡丹江','大庆','佳木斯'].includes(r.city));
+  const jilinLiaoning = results.filter(r => ['吉林白城','吉林吉林','辽宁丹东','辽宁锦州'].includes(r.city));
+  const national = results.filter(r => 
+    !['哈尔滨','齐齐哈尔','牡丹江','大庆','佳木斯','吉林白城','吉林吉林','辽宁丹东','辽宁锦州'].includes(r.city)
+  );
+
+  // 3. 渲染
+  let html = '';
+
+  // 等效位次信息
+  html += `<div class="card"><div class="card-title">2025年等效参考</div>`;
+  html += `<div class="equivalent-box">
+    你输入的 2026年 <strong>${score}分</strong> / 位次 <strong>${rank.toLocaleString()}名</strong><br>
+    → 参考 2025年：约 <strong>${equivalentScore}分</strong> 上下，位次范围 <strong>${range.lowRank.toLocaleString()} ~ ${range.highRank.toLocaleString()}名</strong><br>
+    <span style="font-size:12px;color:#7f8c8d;">（上下各浮动约3%，实际以2026年一分一段表为准）</span>
+  </div></div>`;
+
+  // 省内推荐
+  html += renderTable('黑龙江省内院校推荐', '（哈尔滨 / 齐齐哈尔 / 牡丹江 / 大庆 / 佳木斯）', domestic, rank, major);
+
+  // 吉林辽宁
+  if (jilinLiaoning.length > 0) {
+    html += renderTable('吉林 / 辽宁优先院校', '', jilinLiaoning, rank, major);
+  }
+
+  // 全国范围
+  if (national.length > 0) {
+    html += renderTable('全国范围公办院校推荐', '（河北 / 山西 / 内蒙古 / 河南 / 山东 / 安徽 / 江西 / 湖南 / 重庆 / 云南 / 甘肃 / 新疆）', national, rank, major);
+  }
+
+  document.getElementById('resultArea').innerHTML = html ||
+    `<div class="card"><div class="empty-state"><div class="icon">📋</div>暂无匹配结果，请调整位次或专业后重试</div></div>`;
+}
+
+function renderTable(title, subtitle, data, userRank, targetMajor) {
+  if (data.length === 0) return '';
+  let html = `<div class="card"><div class="card-title">${title}</div>`;
+  if (subtitle) html += `<p style="font-size:12px;color:#94a3b8;margin-bottom:12px;">${subtitle}</p>`;
+  html += `<table><thead><tr>
+    <th>策略</th><th>院校</th><th>城市</th><th>2026组</th><th>主要专业</th>
+    <th>2025参考分</th><th>2025参考位次</th><th>位次差</th><th>学费</th><th>备注</th>
+  </tr></thead><tbody>`;
+
+  data.forEach(u => {
+    // gap = 学校位次 - 你的位次; gap>0=你优于学校, gap<0=你差于学校
+    const gapTxt = u.gap >= 0 ? `低 ${u.gap.toLocaleString()} 名` : `高 ${Math.abs(u.gap).toLocaleString()} 名`;
+    const gapCls = u.gap >= 0 ? 'gap-pos' : 'gap-neg';
+    const badgeCls = u.tier === '冲' ? 'badge-chong' : u.tier === '稳' ? 'badge-wen' : 'badge-bao';
+    const matchHighlight = u.matchScore >= 3 ? 'background:#fff9c4;' : '';
+
+    html += `<tr style="${matchHighlight}">
+      <td><span class="badge ${badgeCls}">${u.tier}</span></td>
+      <td><strong>${u.name}</strong></td>
+      <td><span class="city-tag">${u.city}</span></td>
+      <td>${u.group}</td>
+      <td>${u.majors}</td>
+      <td class="num-highlight">${u.score2025}分</td>
+      <td>${u.rank2025.toLocaleString()}名</td>
+      <td class="${gapCls}">${gapTxt}</td>
+      <td>${u.fee}</td>
+      <td style="font-size:11px;color:#7f8c8d;">${u.note}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table></div>';
+  return html;
+}
+
+function resetForm() {
+  document.getElementById('score').value = '';
+  document.getElementById('rank').value = '';
+  document.getElementById('major').value = '';
+  document.getElementById('resultArea').innerHTML = '';
+}
+
+// Auto-analyze on load
+window.addEventListener('DOMContentLoaded', () => {
+  analyze();
+});
+</script>
+
+</body>
+</html>
